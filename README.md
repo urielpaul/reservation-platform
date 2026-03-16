@@ -48,8 +48,6 @@ Example scenario demonstrated in the GIF:
 ![Realtime reservation coordination](docs/media/realtime-reservation.gif)
 
 
-<video src="docs/media/realtime-reservation.mp4" autoplay loop muted width="900"></video>
-
 ```
 
 Admin A begins creating a reservation
