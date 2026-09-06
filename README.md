@@ -1,74 +1,84 @@
+````md
 # Reservation Platform
 
-Reservation platform architecture designed to support different booking domains such as cabins, hotels, rentals and other reservation-based businesses.
+Production **cabin reservation and management system** built for a real hospitality business using **C#, .NET 8, ASP.NET Core, Entity Framework Core, PostgreSQL, SignalR, Next.js and Docker**.
 
-The platform provides a **policy-driven reservation engine**, real-time coordination between administrators, operational analytics, and production-grade deployment workflows.
+The system combines a public website with an administration dashboard for managing cabins, clients, reservations, availability, pricing, users and operational data.
 
-It is currently deployed in production as a **cabin reservation and management system**, while its architecture is designed to support a generalized **multi-tenant, multi-domain reservation platform** capable of serving multiple booking models.
+The current implementation is focused on **nightly cabin reservations**. Its data model and policy infrastructure are being evolved toward a more reusable reservation architecture capable of supporting additional businesses and booking domains in the future.
 
 ---
 
 # Overview
 
-Reservation systems vary significantly depending on the domain:
+The system was built to replace a manual reservation workflow with a centralized application capable of managing daily operations while preventing common booking conflicts.
 
-* cabins and hotels operate with **check-in / check-out rules**
-* tours and activities operate with **time slots**
-* equipment rentals use **time intervals**
-* other domains may require **custom booking constraints**
+The current production implementation provides:
 
-This project addresses those differences by separating the **core reservation engine** from the **domain-specific policies** that define how reservations behave.
+- cabin and category management
+- client management
+- nightly reservations with check-in / check-out dates
+- availability validation
+- reservation state management
+- real-time administrator coordination
+- operational statistics and reservation analytics
+- user authentication and role-based authorization
+- browser push notifications
+- public cabin catalog and pricing estimation
+- automated deployment and database recovery tooling
 
-The platform provides a **policy-driven reservation system** capable of adapting to different booking models without rewriting the core application logic.
+The application is composed of three main parts:
 
-The result is a backend platform that can support multiple businesses while maintaining a single codebase.
+- **ASP.NET Core API**
+- **Next.js public website and administration dashboard**
+- **Docker-based production infrastructure**
 
 ---
 
 # Live System Demonstration
 
-The following sections show the system currently running in production as a **cabin reservation platform**.
+The following sections show the system currently used as a **cabin reservation and management platform**.
 
 ---
 
 ## Real-time reservation coordination
 
-The system prevents double bookings by coordinating administrators in real time.
+Administrators are coordinated in real time using **ASP.NET Core SignalR**.
 
-When an admin starts interacting with a reservation resource:
+When an administrator begins working with a cabin and date interval, the system can create a temporary hold for that interval.
 
-* the resource is temporarily **locked**
-* other administrators **see the interaction in real time**
-* concurrent conflicting edits are prevented
-
-This coordination is implemented using **WebSockets**.
-
-Example scenario demonstrated in the GIF:
+This allows other administrators to immediately see that the slot is being used and reduces conflicting reservation attempts.
 
 ![Realtime reservation coordination](docs/media/realtime-reservation.gif)
 
+Example:
 
-```
-
+```text
 Admin A begins creating a reservation
-Admin B instantly sees the reservation slot locked
-Concurrent conflicts are prevented in real time
+        ↓
+A temporary hold is created for the cabin and date interval
+        ↓
+Admin B immediately sees the interval as unavailable
+        ↓
+The final reservation is validated again before being persisted
+````
 
-```
+Real-time holds are used for administrator coordination, while final reservation operations perform their own availability validation inside database transactions.
 
-This mechanism prevents overlapping reservations when multiple administrators work simultaneously.
+The backend also uses optimistic concurrency control for reservation updates.
 
 ---
 
 ## Reservation calendar
 
-Administrators manage reservations through an **interactive calendar interface** that displays system occupancy using a heatmap.
+Administrators manage reservations through an **interactive calendar interface** with an occupancy heatmap.
 
 The calendar provides an immediate overview of:
 
 * occupancy levels
 * reservation density
-* available and reserved dates
+* available dates
+* reserved dates
 
 ![Reservation calendar](docs/media/reservation-calendar.png)
 
@@ -76,292 +86,409 @@ The calendar provides an immediate overview of:
 
 ## Daily reservation details
 
-Selecting a specific day in the calendar opens a detailed view listing the reservations affecting that date.
+Selecting a specific day opens a detailed view of the reservations affecting that date.
 
-This allows administrators to quickly inspect:
+Administrators can quickly inspect:
 
-* which units are reserved
+* reserved cabins
 * guest information
 * reservation intervals
-* occupancy levels
+* current occupancy
 
-![Reservation calendar](docs/media/reservation-day-details.png)
+![Reservation day details](docs/media/reservation-day-details.png)
 
 ---
 
 ## Operational statistics dashboard
 
-The system includes a dashboard providing operational insights such as:
+The administration dashboard provides operational information including:
 
 * occupancy percentage
 * active reservations
 * canceled reservations
-* nights reserved
+* reserved nights
 * estimated revenue
 
-These statistics help administrators monitor business performance.
-
-![Reservation calendar](docs/media/dashboard-statistics.png)
+![Dashboard statistics](docs/media/dashboard-statistics.png)
 
 ---
 
 ## Reservation analytics
 
-The platform also provides additional analytics such as **top-performing units by reserved nights**, helping operators understand usage patterns and demand distribution.
+The system also provides reservation analytics such as **cabins ranked by reserved nights**, helping administrators understand occupancy and usage patterns.
 
-![Reservation calendar](docs/media/reservation-analytics.png)
+![Reservation analytics](docs/media/reservation-analytics.png)
 
 ---
 
-## Activity audit log
+## Activity log
 
-All relevant actions performed in the system are logged for **operational auditing and traceability**.
+Administrative operations across several areas of the system are recorded for operational traceability.
 
-The audit log records:
+Logged information includes:
 
-* the administrator who performed the action
-* the entity affected
-* the action executed
-* timestamps and metadata
+* administrator
+* affected entity
+* performed action
+* timestamp
+* related metadata
 
-This allows operators to trace system activity and investigate operational changes.
-
-![Reservation calendar](docs/media/audit-log.png)
+![Activity log](docs/media/audit-log.png)
 
 ---
 
 ## Public website
 
-The system also includes a **public-facing website** used by the business to present its services.
+The system includes a **public-facing website** for the business.
 
-The website provides:
+Visitors can access:
 
-* information about available units
+* cabin information
 * images and descriptions
+* amenities
 * contact information
-* map integrations
+* location and map integrations
 * pricing estimation
 
-![Reservation calendar](docs/media/public-site-gallery.png)
+![Public website](docs/media/public-site-gallery.png)
 
 ---
 
-## Unit catalog
+## Cabin catalog
 
-Visitors can browse available units through a visual catalog including:
+Visitors can browse the available cabins through a visual catalog containing:
 
 * images
 * descriptions
 * amenities
 * occupancy capacity
 
-![Reservation calendar](docs/media/public-site-units.png)
+![Cabin catalog](docs/media/public-site-units.png)
 
 ---
 
-## Reservation estimation
+## Pricing estimation
 
-The public site includes a **pricing estimator** allowing visitors to simulate their stay.
+The public website includes a pricing estimator for simulating the approximate cost of a stay.
 
-Users can adjust:
+Users can select:
 
 * number of guests
 * number of nights
 
-The system dynamically calculates estimated pricing based on configured policies.
+The current policy engine is used to provide configurable **extra-guest pricing** on top of the base nightly rate.
 
-![Reservation calendar](docs/media/reservation-estimator.png)
+![Reservation estimator](docs/media/reservation-estimator.png)
 
 ---
 
-# Key Concepts
+# Reservation Management
 
-## Multi-tenant architecture
+The current domain model is designed specifically around **nightly cabin stays**.
 
-The platform is designed so multiple businesses can use the same backend system while keeping their data isolated.
+Reservations include:
 
-Example tenants:
+* cabin
+* client
+* check-in date
+* check-out date
+* number of guests
+* selected services
+* reservation state
+* nightly price
+* total price
 
+Business validations include:
+
+* check-out must occur after check-in
+* reservations cannot begin before the current date
+* cabin capacity must be respected
+* blocked clients cannot create valid reservations
+* selected services must be active and valid
+* the requested interval must be available
+* reservation state transitions must be valid
+* availability is revalidated when cabins or dates change
+
+Reservation intervals are treated as semi-open ranges:
+
+```text
+[check-in, check-out)
 ```
 
-Tenant A → cabin resort
-Tenant B → hotel
-Tenant C → equipment rental
-Tenant D → activity booking
+This allows one reservation to begin on the same date another reservation ends.
 
+---
+
+# Reservation States
+
+Reservations follow a controlled state model.
+
+The current states include:
+
+* Active
+* Confirmed
+* Absent
+* Canceled
+* Finished
+
+State transitions are validated by the backend.
+
+Some transitions can also be updated automatically based on reservation dates when reservation operations are processed.
+
+Final states are protected from invalid transitions, and date changes are validated against current availability.
+
+---
+
+# Concurrency and Reservation Integrity
+
+Reservation conflicts are handled at multiple levels.
+
+## Real-time coordination
+
+**SignalR** broadcasts reservation hold events between connected administrators.
+
+Temporary holds:
+
+* apply to a cabin and date interval
+* have a limited lifetime
+* support heartbeat renewal
+* can be released explicitly
+* are cleaned automatically after expiration
+
+This provides immediate visual coordination between administrators.
+
+---
+
+## Transactional availability validation
+
+Real-time holds are not treated as the final source of reservation integrity.
+
+Before critical reservation writes are committed, availability is validated again inside a **Serializable PostgreSQL transaction**.
+
+This separates:
+
+```text
+Real-time coordination
+        ↓
+SignalR temporary holds
+        ↓
+Final transactional availability validation
+        ↓
+PostgreSQL
 ```
 
-Each tenant operates independently while sharing the same infrastructure and application logic.
+---
+
+## Optimistic concurrency
+
+Reservation updates also use optimistic concurrency through PostgreSQL's `xmin` value exposed through HTTP entity versioning.
+
+This allows the API to detect situations where two clients attempt to modify the same reservation using stale data.
 
 ---
 
-## Policy-driven reservation engine
+# Policy Engine
 
-Different booking domains require different reservation rules.
+The backend includes an extensible **policy engine** for configurable business rules.
 
-Instead of hardcoding those rules into the system, the platform introduces a **policy layer** that defines how reservations behave for each domain.
+The current production policy implemented through this mechanism controls **additional charges for guests above the base occupancy configuration**.
 
-Examples of domain policies:
+Reservation pricing records which policy set was used when the reservation was calculated.
 
-* nightly stays (cabins, hotels)
-* time-slot reservations (activities)
-* interval-based rentals (equipment)
-* custom booking restrictions
-
-The reservation engine executes the booking logic using these policies, allowing the system to support multiple domains without duplicating business logic.
+The policy infrastructure is intended to support additional configurable rules over time, but most reservation behavior — including availability, states and date handling — currently remains specific to the cabin domain.
 
 ---
 
-# Core Capabilities
+# Authentication and Authorization
 
-## Domain-driven reservation states
+Authentication is implemented using **ASP.NET Core Identity**.
 
-Reservations follow a **state model** with business rule validation.
+The security model includes:
 
-Examples:
+* user registration and invitations
+* email confirmation
+* login
+* password recovery and change
+* account lockout after repeated failed attempts
+* account activation / deactivation
+* JWT access tokens
+* persisted refresh tokens
+* refresh-token rotation
+* token revocation
+* refresh-token reuse detection
 
-* reservations automatically transition to **absent** if check-in is not performed before the configured time
-* finished reservations cannot change state
-* reservation periods can be extended or shortened only when availability rules allow it
+Authorization uses roles and ASP.NET Core policies.
 
-This logic ensures the system enforces the operational rules of the business domain.
+Current roles include:
 
----
-
-## Push notifications
-
-The system supports browser-based push notifications.
-
-Administrators can subscribe their devices to receive notifications even when the application is not open.
-
-Notifications are delivered using the browser Push API and handled by a Service Worker running on the client device.
-
-This allows the system to notify administrators about relevant events without requiring the web application to remain open.
-
----
-
-## Public website and administration dashboard
-
-The platform exposes two different user surfaces.
-
-### Public website
-
-Businesses can publish:
-
-* contact information
-* available units
-* descriptions and images
-* phone numbers and addresses
-* map integrations
-
-This allows the system to function not only as a management tool but also as a **public-facing site for the business**.
-
-### Administration dashboard
-
-The admin interface provides tools for:
-
-* managing units
-* managing clients
-* creating reservations
-* monitoring availability through an interactive calendar
-* reviewing operational statistics
-
----
-
-## Progressive Web App (PWA)
-
-The web application can be installed as a **Progressive Web App**, allowing administrators to use the system as a native-like application on supported devices.
-
----
-
-## Architecture
-
+```text
+Admin
+User
+Unverified
 ```
 
+Administrative API endpoints and real-time hubs are protected through authentication and authorization policies.
 
+---
+
+# Push Notifications
+
+The system supports browser-based **Web Push notifications**.
+
+Administrators can register compatible devices to receive notifications even when the web application is not currently open.
+
+The implementation uses:
+
+* browser Push API
+* persistent push subscriptions
+* VAPID authentication
+* Service Worker notification handling
+
+---
+
+# Progressive Web App
+
+The administration interface can be installed as a **Progressive Web App** on supported devices.
+
+The current implementation provides:
+
+* application manifest
+* installable application metadata
+* application icons
+* Service Worker registration
+* push notification handling
+
+The application does not currently provide an offline-first caching strategy.
+
+---
+
+# Architecture
+
+The backend is implemented as a **layered modular monolith** using ASP.NET Core.
+
+The production system is split across independent backend, frontend and infrastructure repositories.
+
+```text
                ┌─────────────────────────────┐
-               │         End Users           │
-               │  Guests / Admin Operators   │
+               │          End Users          │
+               │  Visitors / Administrators  │
                └──────────────┬──────────────┘
                               │
-          ┌───────────────────┴───────────────────┐
-          │                                       │
-          ▼                                       ▼
-┌──────────────────────────┐            ┌──────────────────────────┐
-│      Public Website      │            │     Admin Dashboard      │
-│  business info, units,   │            │ reservations, calendar,  │
-│ contact, maps, content   │            │ clients, stats, config   │
-└──────────────┬───────────┘            └──────────────┬───────────┘
-               │                                       │
-               └───────────────────┬───────────────────┘
-                                   │
-                                   ▼
-                    ┌─────────────────────────────┐
-                    │    Reservation Platform     │
-                    │            API              │
-                    ├─────────────────────────────┤
-                    │ Multi-tenant core           │
-                    │ Policy-driven booking logic │
-                    │ Reservation engine          │
-                    │ Domain validations/states   │
-                    │ Auth / users / roles        │
-                    │ Notifications               │
-                    └──────────────┬──────────────┘
-                                   │
-          ┌────────────────────────┼────────────────────────┐
-          │                        │                        │
-          ▼                        ▼                        ▼
-┌──────────────────────┐  ┌──────────────────────┐  ┌──────────────────────┐
-│ Real-time Coord.     │  │ Background Workers   │  │   Public / Admin     │
-│ WebSockets locks     │  │ push notifications   │  │    application       │
-│ concurrent edits     │  │ async processing     │  │      services        │
-└──────────────────────┘  └──────────────────────┘  └──────────────────────┘
-                                   │
-                                   ▼
-                        ┌──────────────────────┐
-                        │      PostgreSQL      │
-                        │ tenants, units,      │
-                        │ clients, reservations│
-                        │ policies, states     │
-                        └──────────────────────┘
-
+               ┌──────────────┴──────────────┐
+               │                             │
+               ▼                             ▼
+    ┌──────────────────────┐      ┌──────────────────────┐
+    │    Public Website    │      │   Admin Dashboard    │
+    │                      │      │                      │
+    │ Next.js / React / TS │      │ Next.js / React / TS │
+    └──────────┬───────────┘      └──────────┬───────────┘
+               │                             │
+               └──────────────┬──────────────┘
+                              │ HTTP / SignalR
+                              ▼
+                 ┌─────────────────────────┐
+                 │    ASP.NET Core API     │
+                 ├─────────────────────────┤
+                 │ Controllers             │
+                 │ Application Services    │
+                 │ DTOs / Validation       │
+                 │ Reservation Policies    │
+                 │ Identity / JWT / RBAC   │
+                 │ SignalR Hubs            │
+                 │ Background Services     │
+                 └────────────┬────────────┘
+                              │
+                              ▼
+                 ┌─────────────────────────┐
+                 │       PostgreSQL        │
+                 ├─────────────────────────┤
+                 │ Cabins                  │
+                 │ Clients                 │
+                 │ Reservations            │
+                 │ Users                   │
+                 │ Policies                │
+                 │ Activity Logs           │
+                 │ Reservation Holds       │
+                 └─────────────────────────┘
 ```
 
-Both the public site and admin dashboard interact with the same **Reservation Platform API**, which centralizes:
+The backend uses:
 
-* multi-tenant data isolation
-* reservation rules through policies
-* real-time coordination via WebSockets
-* background processing through workers
-* domain validation and automated state transitions
+* service layer
+* dependency injection
+* application interfaces
+* DTOs
+* FluentValidation
+* Entity Framework Core
+* strategy / handler-based policies
+* SignalR hubs
+* hosted background services
+* explicit transactions for critical operations
+* optimistic concurrency
+* separate public and administrative controllers
 
-The current production deployment uses this architecture for a **cabin reservation business**, while the core design is prepared to support additional booking domains in the future.
+---
+
+# Current Domain Scope
+
+The production implementation currently supports a single reservation model:
+
+```text
+Cabin
+    ↓
+Nightly stay
+    ↓
+Check-in / Check-out dates
+    ↓
+Guests
+    ↓
+Reservation state
+```
+
+The system does **not currently implement**:
+
+* hourly reservations
+* generic time slots
+* equipment rentals
+* tours or activities
+* inventory-based reservations
+* interchangeable booking-domain modules
+
+Some data structures already exist for industries, complexes and policy sets, but they should currently be considered **foundation for future evolution**, not functional multi-tenant or multi-domain support.
 
 ---
 
 # CI/CD Pipeline
 
-The system is deployed using an automated pipeline built around Docker and GitHub Actions.
+The system uses automated deployment workflows built with **GitHub Actions, Docker and GitHub Container Registry**.
 
+```text
+Backend repo  ──► GitHub Actions ──► Docker image ──► GHCR ──┐
+                                                               │
+Frontend repo ──► GitHub Actions ──► Docker image ──► GHCR ───┼──► Infrastructure pipeline
+                                                               │
+Infra repo ────────────────────────────────────────────────────┘
+                                                               │
+                                                               ▼
+                                                        VPS deployment
+                                                               │
+                                      ┌────────────────────────┼────────────────────────┐
+                                      │                        │                        │
+                                      ▼                        ▼                        ▼
+                                 Migrations               Containers              Health checks
 ```
 
-Backend repo   ──► GitHub Actions ──► Docker image ──► GHCR ──┐
-Frontend repo  ──► GitHub Actions ──► Docker image ──► GHCR ──┼──► Infra pipeline ──► VPS deploy
-│
-Infra repo     ───────────────────────────────────────────────┘
-├─ health checks
-├─ firewall hardening
-└─ production rollout
+The deployment workflow performs:
 
-```
+1. container image build and publication
+2. infrastructure workflow dispatch
+3. VPS connection through SSH
+4. database restore-point preparation
+5. Entity Framework migration execution
+6. service recreation
+7. application health verification
 
-Infrastructure responsibilities include:
-
-* automated deployment
-* container orchestration
-* health checks
-* firewall hardening
-* production monitoring
+Database migrations are executed through a dedicated migration container before the application API is started.
 
 ---
 
@@ -372,23 +499,41 @@ Infrastructure responsibilities include:
 * C#
 * .NET 8
 * ASP.NET Core Web API
+* ASP.NET Core Identity
 * Entity Framework Core
-* PostgreSQL
-* WebSockets
+* PostgreSQL 16
+* ASP.NET Core SignalR
+* JWT authentication
+* FluentValidation
+* Serilog
+* Swagger / OpenAPI
 
 ## Frontend
 
 * Next.js
 * React
 * TypeScript
+* Tailwind CSS
+* React Hook Form
+* Zod
+* Recharts
+* SignalR client
 * Progressive Web App support
+* Web Push
 
 ## Infrastructure
 
 * Docker
+* Docker Compose
 * GitHub Actions
-* GitHub Container Registry (GHCR)
-* VPS deployment
+* GitHub Container Registry
+* Nginx
+* Cloudflare Tunnel
+* Linux VPS
+* PostgreSQL
+* pgBackRest
+* S3-compatible object storage / Cloudflare R2
+* systemd timers
 
 ---
 
@@ -396,133 +541,176 @@ Infrastructure responsibilities include:
 
 The production system is composed of multiple repositories:
 
-```
-
+```text
 backend
 frontend
 infrastructure
-
 ```
 
-Due to the system being deployed in a live production environment, the operational repositories remain private.
+The operational repositories remain private because the system is actively used by a real business.
 
-This repository documents the **architecture, design decisions and deployment model** of the platform.
+This public repository documents the system's:
+
+* architecture
+* main capabilities
+* technical decisions
+* production workflow
+* visual interface
 
 ---
 
 # Operational Infrastructure
 
-The production deployment includes automated operational tooling to ensure safe database operations.
+The production infrastructure includes tooling for database backup, recovery and deployment safety.
 
-Backups and restore procedures are handled using **pgBackRest**, integrated with Docker Compose and automated through a custom operations toolkit.
+PostgreSQL backup and restore operations are managed with **pgBackRest**.
 
-Key capabilities include:
+The infrastructure defines support for:
 
-* automated snapshot backups
+* S3-compatible backup storage
+* WAL archiving
+* Point-in-Time Recovery
+* scheduled differential backups
+* scheduled full backups
 * restore-to-new-volume workflows
-* shadow validation before promotion
+* shadow-instance validation
 * controlled production cutovers
-* rollback-friendly restore procedures
-
-To standardize and simplify these operations, I developed a dedicated Bash toolkit which is now maintained as an open-source project:
-
-**pgbackrest-compose-ops**  
-https://github.com/uri157/pgbackrest-compose-ops
+* rollback to the previous PostgreSQL volume
 
 ---
 
-# Operational Guarantees
+## Backup and recovery workflow
 
-### Automated Backups
+Database restores avoid overwriting the active production database in place.
 
-The database is backed up automatically using **pgBackRest**, with snapshot backups scheduled on the VPS through systemd timers.
+Instead:
 
-### Safe Restore Procedures
+```text
+Production volume
+        │
+        ├──────────────► remains untouched
+        │
+        ▼
+Restore backup
+        │
+        ▼
+New PostgreSQL volume
+        │
+        ▼
+Shadow validation
+        │
+        ├── invalid ──► discard restored volume
+        │
+        └── valid
+             │
+             ▼
+       Controlled cutover
+             │
+             ▼
+     Previous volume retained
+     temporarily for rollback
+```
 
-Database restores follow a **restore-to-new-volume strategy**, avoiding in-place overwrites of production data.
+This makes backup validation possible before a restored database is promoted.
 
-A restored instance can be validated before promotion to ensure the integrity of the backup.
+---
 
-### Controlled Cutover and Rollback
+## Health verification
 
-Production database switches are performed through controlled volume changes, allowing:
+The deployment stack defines health checks for:
 
-* validation before promotion
-* fast rollback to the previous volume if necessary
+* PostgreSQL
+* ASP.NET Core API
+* Next.js frontend
+* Nginx
 
-### Health Monitoring
-
-The deployment pipeline includes health checks to verify that application containers are running correctly after deployment.
+Deployment automation waits for application health verification after containers are recreated.
 
 ---
 
 # Engineering Tooling
 
-During the development and operation of this system, some internal operational tools proved robust enough to be extracted and published as standalone open-source projects.
-
-These tools were originally built to solve real production problems encountered while operating this platform.
+Some operational tools originally created for this system were extracted and published as standalone open-source projects.
 
 ---
 
-### compose-vps-deploy
+## compose-vps-deploy
 
-Deterministic deployment toolkit for Docker Compose workloads on a VPS.
+Deterministic deployment tooling for Docker Compose workloads running on VPS infrastructure.
 
-It provides a structured deploy pipeline including:
+It provides a structured deployment workflow including:
 
 * preflight validation
 * container image deployment
-* migration execution
-* container recreation
-* post-deploy health verification
+* database migration execution
+* service recreation
+* post-deployment health verification
 
-Repository:  
-https://github.com/uri157/compose-vps-deploy
+Repository:
+[https://github.com/uri157/compose-vps-deploy](https://github.com/uri157/compose-vps-deploy)
 
 ---
 
-### pgbackrest-compose-ops
+## pgbackrest-compose-ops
 
-Operational toolkit for safe PostgreSQL backup and restore procedures using pgBackRest in Docker Compose environments.
+Operational toolkit for PostgreSQL backup and restore workflows using **pgBackRest with Docker Compose**.
 
-Key capabilities include:
+It supports:
 
-* automated snapshot backups
+* backup automation
 * restore to a new volume
-* shadow validation before promotion
-* controlled production cutover
-* rollback-friendly restore procedures
+* shadow-instance validation
+* controlled cutover
+* rollback-friendly recovery
 
-Repository:  
-https://github.com/uri157/pgbackrest-compose-ops
-
----
-
-These tools emerged directly from operating the reservation platform in production and are now maintained as reusable open-source utilities.
+Repository:
+[https://github.com/uri157/pgbackrest-compose-ops](https://github.com/uri157/pgbackrest-compose-ops)
 
 ---
 
 # Project Origins
 
-The platform originally started as a **cabin management system built for a real client** during a university software engineering project.
+The project began as a **cabin management system developed for a real client** during a university software engineering project.
 
-The development team consisted of **four developers working under a Scrum process**, supervised by two senior engineers:
-
-* one focused on **software engineering practices, UI, and client interaction**
-* one focused on **technical architecture**
+The development team consisted of **four developers working under Scrum**, with guidance from two senior engineers focused on software engineering practices and technical architecture.
 
 During the project:
 
 * I initially served as **Scrum Master**
-* over time I naturally adopted the **Product Owner role**, becoming the main communication channel with the client
+* I developed a significant portion of the backend
+* I participated in system and infrastructure design
+* I later assumed **Product Owner responsibilities**
+* I became the main communication channel between the development team and the client
 
-After the academic project finished, I continued maintaining and evolving the system in production.
-
-The architecture implemented during that project allowed the system to grow beyond its original scope and evolve into a **general-purpose reservation platform**.
+After the academic phase ended, I continued maintaining, deploying and evolving the application as a production system for the client.
 
 ---
 
 # Future Evolution
 
-The platform is currently evolving toward a fully generalized **multi-tenant reservation platform**, capable of supporting additional booking domains and customizable reservation policies.
+The current implementation is intentionally focused on the cabin reservation domain.
 
+The project is gradually evolving toward a more reusable reservation architecture.
+
+Future directions include:
+
+* functional multi-tenancy with business-level data isolation
+* tenant-aware authentication and authorization
+* dynamic tenant resolution
+* additional configurable reservation policies
+* generalized reservable resources
+* hourly and time-slot reservations
+* equipment rental workflows
+* activities and other booking domains
+* stronger database-level overlap guarantees
+* atomic reservation-hold acquisition
+* broader automated testing
+* commit-pinned deployment images
+* expanded production observability
+
+Some preliminary models for **industries, complexes and tenant-specific policy sets** already exist, but these capabilities are considered architectural groundwork rather than completed product functionality.
+
+The current production system remains a **cabin reservation and management application**, while these abstractions provide a path toward supporting additional reservation models over time.
+
+```
+```
