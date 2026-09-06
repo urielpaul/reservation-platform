@@ -1,4 +1,3 @@
-````md
 # Reservation Platform
 
 Production **cabin reservation and management system** built for a real hospitality business using **C#, .NET 8, ASP.NET Core, Entity Framework Core, PostgreSQL, SignalR, Next.js and Docker**.
@@ -712,5 +711,4 @@ Some preliminary models for **industries, complexes and tenant-specific policy s
 
 The current production system remains a **cabin reservation and management application**, while these abstractions provide a path toward supporting additional reservation models over time.
 
-```
-```
+
