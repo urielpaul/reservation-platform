@@ -646,7 +646,7 @@ It provides a structured deployment workflow including:
 * post-deployment health verification
 
 Repository:
-[https://github.com/uri157/compose-vps-deploy](https://github.com/uri157/compose-vps-deploy)
+[https://github.com/uri157/compose-vps-deploy](https://github.com/urielpaul/compose-vps-deploy)
 
 ---
 
@@ -663,7 +663,7 @@ It supports:
 * rollback-friendly recovery
 
 Repository:
-[https://github.com/uri157/pgbackrest-compose-ops](https://github.com/uri157/pgbackrest-compose-ops)
+[https://github.com/uri157/pgbackrest-compose-ops](https://github.com/urielpaul/pgbackrest-compose-ops)
 
 ---
 
